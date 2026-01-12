@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>API Keys | Klinik Hewan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <ion-icon name="paw"></ion-icon> VetKlinik
+                </div>
+            </div>
+            <nav class="sidebar-menu">
+                <div class="menu-label"
+                    style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                    Menu</div>
+                <a href="dashboard.html" class="menu-item"><ion-icon name="grid-outline"></ion-icon> Dashboard</a>
+                <a href="animals.html" class="menu-item"><ion-icon name="list-outline"></ion-icon> Data Hewan</a>
+                <a href="medical-records.html" class="menu-item"><ion-icon name="medkit-outline"></ion-icon> Rekam
+                    Medis</a>
+                <a href="media.html" class="menu-item"><ion-icon name="images-outline"></ion-icon> Galeri Media</a>
+                <a href="api-keys.html" class="menu-item active" id="apiKeyMenu"><ion-icon
+                        name="key-outline"></ion-icon> API Keys</a>
+                <div id="adminMenu"
+                    style="display:none; margin-top:1rem; border-top:1px solid #e2e8f0; padding-top:1rem;">
+                    <div class="menu-label"
+                        style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                        Admin</div>
+                    <a href="users.html" class="menu-item"><ion-icon name="people-outline"></ion-icon> User
+                        Management</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="userInitial">U</div>
+                    <div class="user-info">
+                        <div id="userName">User</div>
+                        <span id="userRole">Role</span>
+                    </div>
+                    <button onclick="logout()" class="btn-link" style="margin-left:auto; color:#ef4444;" title="Logout">
+                        <ion-icon name="log-out-outline" style="font-size:1.5rem;"></ion-icon>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h2 class="page-title">Manajemen API</h2>
+                    <p style="color:var(--text-muted);">Kelola kunci akses Anda untuk aplikasi pihak ketiga.</p>
+                </div>
+            </div>
+
+            <div class="card api-key-card" style="text-align:center; padding:3rem 2rem;">
+                <div style="font-size:4rem; margin-bottom:1rem; opacity:0.8;"><ion-icon name="key"></ion-icon></div>
+                <h3 style="margin-bottom:0.5rem; font-size:1.5rem;">API Key Anda</h3>
+                <p style="opacity:0.9; margin-bottom:2rem; max-width:500px; margin-left:auto; margin-right:auto;">
+                    Gunakan API Key ini untuk mengakses data melalui endpoint API kami. Jangan bagikan kunci ini kepada
+                    siapa pun.
+                </p>
+
+                <div id="keyDisplayContainer" style="display:none; margin-bottom:2rem;">
+                    <div
+                        style="background:rgba(255,255,255,0.2); padding:1rem; border-radius:0.5rem; font-family:monospace; font-size:1.25rem; letter-spacing:2px; user-select:all; display:inline-block; border:1px solid rgba(255,255,255,0.4);">
+                        <span id="currentKey">LOADING...</span>
+                    </div>
+                    <br>
+                    <button class="btn" style="margin-top:1rem; background:white; color:var(--primary);"
+                        onclick="copyKey()">
+                        <ion-icon name="copy-outline"></ion-icon> Salin Kunci
+                    </button>
+                </div>
+
+                <div id="noKeyContainer" style="display:none; margin-bottom:2rem;">
+                    <p style="color:#fecaca; margin-bottom:1rem;">Anda belum memiliki API Key aktif.</p>
+                    <button class="btn" style="background:white; color:var(--primary);" onclick="generateKey()">
+                        <ion-icon name="add-circle-outline"></ion-icon> Buat API Key Baru
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title"><span>Instruksi Penggunaan</span></div>
+                <div style="color:var(--text-muted); line-height:1.7;">
+                    <p>1. Salin API Key di atas.</p>
+                    <p>2. Sertakan dalam header HTTP setiap request ke endpoint data (<code>/api/animals</code>, dll).
+                    </p>
+                    <code
+                        style="background:#f1f5f9; padding:0.2rem 0.5rem; border-radius:4px; color:var(--primary);">x-api-key: YOUR_API_KEY</code>
+                    <p style="margin-top:1rem;">Untuk keamanan, API Key akan terhubung langsung dengan akun Anda.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const API = "http://localhost:3000/api";
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (!token || !user) window.location.href = "login.html";
+
+        // Sidebar & User
+        document.getElementById("userName").innerText = user.name.split(" ")[0];
+        document.getElementById("userRole").innerText = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        document.getElementById("userInitial").innerText = user.name.charAt(0).toUpperCase();
+        if (user.role === 'admin') {
+            document.getElementById("adminMenu").style.display = "block";
+            document.getElementById("apiKeyMenu").style.display = "none";
+        }
+
+
+        async function loadKey() {
+            try {
+                const res = await fetch(`${API}/api-keys`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                let key = null;
+
+                // Backend returns an array for GET /api-keys
+                if (Array.isArray(data) && data.length > 0) {
+                    // Find active key or take first
+                    const active = data.find(k => k.is_active === 1) || data[0];
+                    key = active.api_key;
+                }
+                // Fallback for object response
+                else if (data && (data.apiKey || data.api_key)) {
+                    key = data.apiKey || data.api_key;
+                }
+
+                if (res.ok && key) {
+                    document.getElementById("keyDisplayContainer").style.display = "block";
+                    document.getElementById("noKeyContainer").style.display = "none";
+                    document.getElementById("currentKey").innerText = key;
+                    localStorage.setItem("apiKey", key);
+                } else {
+                    document.getElementById("keyDisplayContainer").style.display = "none";
+                    document.getElementById("noKeyContainer").style.display = "block";
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function generateKey() {
+            if (!confirm("Buat API Key baru?")) return;
+            try {
+                const res = await fetch(`${API}/api-keys`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("API Key berhasil dibuat!");
+                    loadKey();
+                } else {
+                    alert("Gagal: " + data.message);
+                }
+            } catch (e) { alert("Error"); }
+        }
+
+        function copyKey() {
+            const key = document.getElementById("currentKey").innerText;
+            navigator.clipboard.writeText(key).then(() => {
+                alert("API Key tersalin ke clipboard!");
+            });
+        }
+
+        function logout() { localStorage.clear(); window.location.href = "login.html"; }
+
+        loadKey();
+    </script>
+</body>
+
+</html>

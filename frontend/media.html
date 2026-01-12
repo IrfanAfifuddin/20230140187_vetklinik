@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Galeri Media | Klinik Hewan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <ion-icon name="paw"></ion-icon> VetKlinik
+                </div>
+            </div>
+            <nav class="sidebar-menu">
+                <div class="menu-label"
+                    style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                    Menu</div>
+                <a href="dashboard.html" class="menu-item"><ion-icon name="grid-outline"></ion-icon> Dashboard</a>
+                <a href="animals.html" class="menu-item"><ion-icon name="list-outline"></ion-icon> Data Hewan</a>
+                <a href="medical-records.html" class="menu-item"><ion-icon name="medkit-outline"></ion-icon> Rekam
+                    Medis</a>
+                <a href="media.html" class="menu-item active"><ion-icon name="images-outline"></ion-icon> Galeri
+                    Media</a>
+                <a href="api-keys.html" class="menu-item" id="apiKeyMenu"><ion-icon name="key-outline"></ion-icon> API
+                    Keys</a>
+                <div id="adminMenu"
+                    style="display:none; margin-top:1rem; border-top:1px solid #e2e8f0; padding-top:1rem;">
+                    <div class="menu-label"
+                        style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                        Admin</div>
+                    <a href="users.html" class="menu-item"><ion-icon name="people-outline"></ion-icon> User
+                        Management</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="userInitial">U</div>
+                    <div class="user-info">
+                        <div id="userName">User</div>
+                        <span id="userRole">Role</span>
+                    </div>
+                    <button onclick="logout()" class="btn-link" style="margin-left:auto; color:#ef4444;" title="Logout">
+                        <ion-icon name="log-out-outline" style="font-size:1.5rem;"></ion-icon>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h2 class="page-title">Galeri Media</h2>
+                    <p style="color:var(--text-muted);">Foto dan dokumen pemeriksaan hewan.</p>
+                </div>
+            </div>
+
+            <div class="card api-key-card" id="apiKeyCard">
+                <div class="card-title">
+                    <span><ion-icon name="key"></ion-icon> Autentikasi Data</span>
+                </div>
+                <p style="margin-bottom:1rem;">Masukkan API Key Anda untuk memuat media.</p>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="inputApiKey" placeholder="Tempel API Key Anda di sini..." style="margin:0;">
+                    <button class="btn btn-primary" style="background:#fff; color:var(--primary);"
+                        onclick="saveKeyAndLoad()">Load Data</button>
+                </div>
+            </div>
+
+            <div class="card" id="selectCard" style="display:none;">
+                <div class="card-title"><span>Pilih Hewan</span></div>
+                <select id="animalSelect" style="margin:0;"></select>
+            </div>
+
+            <!-- UPLOAD (Admin only usually) -->
+            <div class="card" id="uploadCard" style="display:none; border-left:4px solid var(--primary);">
+                <div class="card-title"><span>Upload Media (Admin)</span></div>
+                <div class="grid-cols-4" style="grid-template-columns: 1fr 2fr; gap:1rem; align-items:end;">
+                    <div>
+                        <label>Pilih File</label>
+                        <input type="file" id="fileInput" name="file" accept="image/*" style="margin:0;">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="uploadMedia()" style="margin-top:1rem;">
+                    <ion-icon name="cloud-upload-outline"></ion-icon> Upload
+                </button>
+            </div>
+
+            <div class="card" id="dataCard" style="display:none;">
+                <div class="card-title"><span>Galeri Foto</span></div>
+                <div class="media-grid" id="mediaGallery">
+                    <!-- Media Items -->
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const API = "http://localhost:3000/api";
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user"));
+        let apiKey = localStorage.getItem("apiKey");
+
+        if (!token || !user) window.location.href = "login.html";
+
+        // Sidebar & User
+        document.getElementById("userName").innerText = user.name.split(" ")[0];
+        document.getElementById("userRole").innerText = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        document.getElementById("userInitial").innerText = user.name.charAt(0).toUpperCase();
+        if (user.role === 'admin') document.getElementById("adminMenu").style.display = "block";
+
+        // UI Logic
+        const uploadCard = document.getElementById("uploadCard");
+        const selectCard = document.getElementById("selectCard");
+        const dataCard = document.getElementById("dataCard");
+        const apiKeyCard = document.getElementById("apiKeyCard");
+        const inputApiKey = document.getElementById("inputApiKey");
+        const apiKeyMenu = document.getElementById("apiKeyMenu");
+
+
+        if (user.role === 'admin') {
+            apiKeyMenu.style.display = "none";
+            apiKeyCard.style.display = "none";
+            selectCard.style.display = "block";
+            dataCard.style.display = "block";
+            uploadCard.style.display = "block"; // Show upload
+            loadAnimals();
+        } else {
+            if (apiKey) {
+                inputApiKey.value = apiKey;
+                // auto-load optional
+            }
+        }
+
+        async function saveKeyAndLoad() {
+            const key = document.getElementById("inputApiKey").value.trim();
+            if (!key && user.role !== 'admin') return alert("API Key diperlukan");
+            if (user.role !== 'admin') {
+                apiKey = key;
+                localStorage.setItem("apiKey", key);
+            }
+            await loadAnimals();
+        }
+
+        function getHeaders(checkForFile = false) {
+            const h = {};
+            if (token) h["Authorization"] = `Bearer ${token}`;
+            if (apiKey) h["x-api-key"] = apiKey;
+            if (!checkForFile) h["Content-Type"] = "application/json";
+            return h;
+        }
+
+        async function loadAnimals() {
+            if (user.role !== 'admin') {
+                selectCard.style.display = "none";
+                dataCard.style.display = "none";
+            }
+
+            try {
+                const h = getHeaders();
+                const res = await fetch(`${API}/animals`, { headers: h });
+                if (!res.ok) throw new Error("Gagal");
+                const animals = await res.json();
+
+                const select = document.getElementById("animalSelect");
+                select.innerHTML = "";
+
+                if (Array.isArray(animals)) {
+                    if (user.role !== 'admin') {
+                        selectCard.style.display = "block";
+                        dataCard.style.display = "block";
+                    }
+
+                    if (animals.length === 0) {
+                        select.innerHTML = "<option>Tidak ada data hewan</option>";
+                        return;
+                    }
+
+                    animals.forEach(a => {
+                        const opt = document.createElement("option");
+                        opt.value = a.id;
+                        const ownerInfo = a.User ? ` - Owner: ${a.User.name}` : '';
+                        opt.innerText = `${a.name} (${a.species})${ownerInfo}`;
+                        select.appendChild(opt);
+                    });
+
+                    loadMedia(animals[0].id);
+                }
+
+            } catch (e) {
+                console.error(e);
+                if (user.role !== 'admin') alert("Gagal memuat data (Cek API Key)");
+            }
+        }
+
+        async function loadMedia(animalId) {
+            if (!animalId) return;
+            try {
+                const h = getHeaders();
+                const res = await fetch(`${API}/media/${animalId}`, { headers: h });
+                const media = await res.json();
+
+                const gallery = document.getElementById("mediaGallery");
+                gallery.innerHTML = "";
+
+                if (Array.isArray(media)) {
+                    if (media.length === 0) {
+                        gallery.innerHTML = "<p style='color:var(--text-muted); grid-column:1/-1; text-align:center;'>Belum ada foto.</p>";
+                        return;
+                    }
+                    media.forEach(m => {
+                        gallery.innerHTML += `
+                    <div class="media-item" style="position:relative;">
+                        <img src="http://localhost:3000/${m.file_path}" alt="Media">
+                        <div style="padding:0.5rem; font-size:0.85rem; color:var(--text-main); font-weight:500;">
+                            ${m.file_name}
+                        </div>
+                        ${user.role === 'admin' ?
+                                `<button onclick="deleteMedia(${m.id})" style="position:absolute; top:5px; right:5px; background:red; color:white; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">
+                            <ion-icon name="trash-outline"></ion-icon>
+                        </button>` : ''}
+                    </div>`;
+                    });
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function deleteMedia(id) {
+            if (!confirm("Hapus foto ini?")) return;
+            try {
+                const h = getHeaders();
+                const res = await fetch(`${API}/media/${id}`, {
+                    method: 'DELETE',
+                    headers: h
+                });
+                if (res.ok) {
+                    alert("Foto dihapus");
+                    const animalId = document.getElementById("animalSelect").value;
+                    loadMedia(animalId);
+                } else {
+                    alert("Gagal hapus");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error");
+            }
+        }
+
+        async function uploadMedia() {
+            const animalId = document.getElementById("animalSelect").value;
+            const fileInput = document.getElementById("fileInput");
+
+
+            if (fileInput.files.length === 0) return alert("Pilih file dulu");
+
+            const formData = new FormData();
+            formData.append("animal_id", animalId);
+            formData.append("file", fileInput.files[0]);
+
+            try {
+                // Need special headers without Content-Type for FormData
+                const h = { "Authorization": `Bearer ${token}` };
+                if (apiKey) h["x-api-key"] = apiKey;
+
+                const res = await fetch(`${API}/media`, {
+                    method: "POST",
+                    headers: h,
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const r = await res.json();
+                    return alert(r.message || "Gagal upload");
+                }
+
+                alert("Upload Berhasil");
+                fileInput.value = "";
+
+                loadMedia(animalId);
+
+            } catch (e) { alert("Error upload"); }
+        }
+
+        document.getElementById("animalSelect").addEventListener("change", (e) => {
+            loadMedia(e.target.value);
+        });
+
+        function logout() { localStorage.clear(); window.location.href = "login.html"; }
+    </script>
+</body>
+
+</html>

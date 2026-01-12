@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Data Hewan | Klinik Hewan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <ion-icon name="paw"></ion-icon> VetKlinik
+                </div>
+            </div>
+            <nav class="sidebar-menu">
+                <div class="menu-label"
+                    style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                    Menu</div>
+                <a href="dashboard.html" class="menu-item"><ion-icon name="grid-outline"></ion-icon> Dashboard</a>
+                <a href="animals.html" class="menu-item active"><ion-icon name="list-outline"></ion-icon> Data Hewan</a>
+                <a href="medical-records.html" class="menu-item"><ion-icon name="medkit-outline"></ion-icon> Rekam
+                    Medis</a>
+                <a href="media.html" class="menu-item"><ion-icon name="images-outline"></ion-icon> Galeri Media</a>
+                <a href="api-keys.html" class="menu-item" id="apiKeyMenu"><ion-icon name="key-outline"></ion-icon> API
+                    Keys</a>
+                <div id="adminMenu"
+                    style="display:none; margin-top:1rem; border-top:1px solid #e2e8f0; padding-top:1rem;">
+                    <div class="menu-label"
+                        style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                        Admin</div>
+                    <a href="users.html" class="menu-item"><ion-icon name="people-outline"></ion-icon> User
+                        Management</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="userInitial">U</div>
+                    <div class="user-info">
+                        <div id="userName">User</div>
+                        <span id="userRole">Role</span>
+                    </div>
+                    <button onclick="logout()" class="btn-link" style="margin-left:auto; color:#ef4444;" title="Logout">
+                        <ion-icon name="log-out-outline" style="font-size:1.5rem;"></ion-icon>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h2 class="page-title">Data Hewan</h2>
+                    <p style="color:var(--text-muted);">Kelola data pasien hewan peliharaan.</p>
+                </div>
+            </div>
+
+            <!-- API KEY INPUT (If needed) -->
+            <div class="card api-key-card" id="apiKeyCard">
+                <div class="card-title">
+                    <span><ion-icon name="key"></ion-icon> Autentikasi Data</span>
+                </div>
+                <p style="margin-bottom:1rem;">Masukkan API Key Anda untuk memuat data hewan.</p>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="inputApiKey" placeholder="Tempel API Key Anda di sini..." style="margin:0;">
+                    <button class="btn btn-primary" style="background:#fff; color:var(--primary);"
+                        onclick="saveKeyAndLoad()">
+                        Load Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- FORM TAMBAH HEWAN (Admin Only) -->
+            <div class="card" id="formCard" style="display:none;">
+                <div class="card-title">
+                    <span>Tambah Hewan Baru</span>
+                </div>
+
+                <div class="form-group" id="ownerSelectGroup" style="display:none;">
+                    <label>Pemilik (Admin Option)</label>
+                    <select id="inputOwnerId">
+                        <option value="">-- Milik Saya (Admin) --</option>
+                    </select>
+                </div>
+
+                <div class="grid-cols-4" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div>
+                        <label>Nama Hewan</label>
+                        <input type="text" id="name" placeholder="Contoh: Snowy">
+                    </div>
+                    <div>
+                        <label>Spesies</label>
+                        <input type="text" id="species" placeholder="Contoh: Kucing">
+                    </div>
+                    <div>
+                        <label>Umur (Tahun)</label>
+                        <input type="number" id="age" placeholder="Contoh: 2">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="addAnimal()">
+                    <ion-icon name="add-circle-outline"></ion-icon> Tambah Hewan
+                </button>
+            </div>
+
+            <!-- LIST HEWAN -->
+            <div class="card" id="dataCard" style="display:none;">
+                <div class="card-title">
+                    <span>Daftar Pasien</span>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Spesies</th>
+                            <th>Umur</th>
+                            <th>Pemilik</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="animalTable">
+                        <!-- Data will appear here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Edit Modal -->
+            <div id="editAnimalModal" class="modal"
+                style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+                <div class="modal-content"
+                    style="background:white; width:400px; margin:100px auto; padding:20px; border-radius:8px;">
+                    <h3>Edit Hewan</h3>
+                    <input type="hidden" id="editAnimalId">
+                    <div style="margin-bottom:1rem;">
+                        <label>Nama</label>
+                        <input type="text" id="editAnimalName" class="form-control" style="width:100%;">
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label>Spesies</label>
+                        <input type="text" id="editAnimalSpecies" class="form-control" style="width:100%;">
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label>Umur</label>
+                        <input type="number" id="editAnimalAge" class="form-control" style="width:100%;">
+                    </div>
+                    <div style="text-align:right;">
+                        <button class="btn btn-outline" onclick="closeEditAnimalModal()">Batal</button>
+                        <button class="btn btn-primary" onclick="updateAnimal()">Simpan</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API = "http://localhost:3000/api";
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user"));
+        let apiKey = localStorage.getItem("apiKey");
+
+        if (!token || !user) window.location.href = "login.html";
+
+        // Sidebar & User Setup
+        document.getElementById("userName").innerText = user.name.split(" ")[0];
+        document.getElementById("userRole").innerText = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        document.getElementById("userInitial").innerText = user.name.charAt(0).toUpperCase();
+        if (user.role === 'admin') {
+            document.getElementById("adminMenu").style.display = "block";
+            document.getElementById("apiKeyMenu").style.display = "none";
+        }
+
+        // UI Logic
+        const formCard = document.getElementById("formCard");
+        const dataCard = document.getElementById("dataCard");
+        const apiKeyCard = document.getElementById("apiKeyCard");
+        const inputApiKey = document.getElementById("inputApiKey");
+
+        if (user.role === "admin") {
+            apiKeyCard.style.display = "none";
+            formCard.style.display = "block";
+            dataCard.style.display = "block";
+            document.getElementById("ownerSelectGroup").style.display = "block";
+            loadUsersForAdmin();
+            loadAnimals();
+        } else {
+            if (apiKey) {
+                inputApiKey.value = apiKey;
+                // Optional: Auto load if key exists? Let's wait for click as per recent preference or try auto
+                // Recent feedback was "just make it work".
+            }
+        }
+
+        /* ACTIONS */
+        async function saveKeyAndLoad() {
+            const key = document.getElementById("inputApiKey").value.trim();
+            if (!key && user.role !== 'admin') {
+                alert("Mohon masukkan API Key");
+                return;
+            }
+            if (user.role !== 'admin') {
+                apiKey = key;
+                localStorage.setItem("apiKey", key);
+            }
+            await loadAnimals();
+        }
+
+        function getHeaders() {
+            const h = { "Content-Type": "application/json" };
+            if (token) h["Authorization"] = `Bearer ${token}`;
+            if (apiKey) h["x-api-key"] = apiKey;
+            return h;
+        }
+
+        async function loadAnimals() {
+            if (user.role !== 'admin') document.getElementById("dataCard").style.display = "none";
+
+            try {
+                const res = await fetch(`${API}/animals`, { headers: getHeaders() });
+                if (!res.ok) throw new Error("Gagal mengambil data");
+                const data = await res.json();
+
+                const table = document.getElementById("animalTable");
+                table.innerHTML = "";
+                document.getElementById("dataCard").style.display = "block";
+
+                if (Array.isArray(data)) {
+                    if (data.length === 0) {
+                        table.innerHTML = "<tr><td colspan='4' class='text-center'>Belum ada data hewan.</td></tr>";
+                        return;
+                    }
+                    data.forEach(a => {
+                        const ownerName = a.User ? a.User.name : 'Unknown';
+                        let actionButtons = '-';
+                        if (user.role === 'admin') {
+                            actionButtons = `
+                                <button onclick="openEditAnimalModal(${a.id}, '${a.name}', '${a.species}', ${a.age})" style="color:blue; border:none; background:none; cursor:pointer;"><ion-icon name="create-outline"></ion-icon></button>
+                                <button onclick="deleteAnimal(${a.id})" style="color:red; border:none; background:none; cursor:pointer;"><ion-icon name="trash-outline"></ion-icon></button>
+                            `;
+                        }
+
+                        table.innerHTML += `
+                    <tr>
+                        <td style="font-weight:600; color:var(--primary);">${a.name}</td>
+                        <td>${a.species}</td>
+                        <td>${a.age} Tahun</td>
+                        <td>${ownerName}</td>
+                        <td><span style="background:#dcfce7; color:#166534; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:700;">Active</span></td>
+                        <td>${actionButtons}</td>
+                    </tr>`;
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                if (user.role !== 'admin') alert("Gagal memuat data. Periksa API Key Anda.");
+            }
+        }
+
+        async function loadUsersForAdmin() {
+            try {
+                const res = await fetch(`${API}/users`, { headers: { "Authorization": `Bearer ${token}` } });
+                const users = await res.json();
+                const select = document.getElementById("inputOwnerId");
+                select.innerHTML = '<option value="">-- Diri Sendiri (Admin) --</option>';
+                if (Array.isArray(users)) {
+                    users.forEach(u => select.innerHTML += `<option value="${u.id}">${u.name} (${u.role})</option>`);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function addAnimal() {
+            const name = document.getElementById("name").value.trim();
+            const species = document.getElementById("species").value.trim();
+            const age = document.getElementById("age").value;
+            const ownerId = document.getElementById("inputOwnerId").value;
+
+            if (!name || name.length < 3) return alert("Nama hewan minimal 3 karakter");
+            if (!species) return alert("Spesies harus diisi");
+            if (!age || age <= 0) return alert("Umur harus angka > 0");
+
+            const payload = { name, species, age };
+            if (user.role === 'admin' && ownerId) payload.owner_id = ownerId;
+
+            try {
+                const res = await fetch(`${API}/animals`, {
+                    method: "POST",
+                    headers: getHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) {
+                    const e = await res.json();
+                    return alert(e.message || "Gagal");
+                }
+                document.getElementById("name").value = "";
+                document.getElementById("species").value = "";
+                document.getElementById("age").value = "";
+                loadAnimals();
+                alert("Berhasil!");
+            } catch (err) { alert("Error"); }
+        }
+
+        /* EDIT & DELETE FUNCTIONS */
+        function openEditAnimalModal(id, name, species, age) {
+            document.getElementById("editAnimalId").value = id;
+            document.getElementById("editAnimalName").value = name;
+            document.getElementById("editAnimalSpecies").value = species;
+            document.getElementById("editAnimalAge").value = age;
+            document.getElementById("editAnimalModal").style.display = "block";
+        }
+
+        function closeEditAnimalModal() {
+            document.getElementById("editAnimalModal").style.display = "none";
+        }
+
+        async function updateAnimal() {
+            const id = document.getElementById("editAnimalId").value;
+            const name = document.getElementById("editAnimalName").value;
+            const species = document.getElementById("editAnimalSpecies").value;
+            const age = document.getElementById("editAnimalAge").value;
+
+            try {
+                const res = await fetch(`${API}/animals/${id}`, {
+                    method: "PUT",
+                    headers: getHeaders(),
+                    body: JSON.stringify({ name, species, age })
+                });
+                if (res.ok) {
+                    alert("Berhasil diperbarui");
+                    closeEditAnimalModal();
+                    loadAnimals();
+                } else {
+                    alert("Gagal update");
+                }
+            } catch (e) { alert("Error"); }
+        }
+
+        async function deleteAnimal(id) {
+            if (!confirm("Hapus data hewan ini? Data terkait (rekam medis/media) juga akan tehapus.")) return;
+            try {
+                const res = await fetch(`${API}/animals/${id}`, {
+                    method: "DELETE",
+                    headers: getHeaders()
+                });
+                if (res.ok) {
+                    alert("Berhasil dihapus");
+                    loadAnimals();
+                } else {
+                    alert("Gagal hapus");
+                }
+            } catch (e) { alert("Error"); }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+
+</html>

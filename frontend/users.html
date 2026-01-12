@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Manajemen User | Klinik Hewan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <ion-icon name="paw"></ion-icon> VetKlinik
+                </div>
+            </div>
+            <nav class="sidebar-menu">
+                <div class="menu-label"
+                    style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                    Menu</div>
+                <a href="dashboard.html" class="menu-item"><ion-icon name="grid-outline"></ion-icon> Dashboard</a>
+                <a href="animals.html" class="menu-item"><ion-icon name="list-outline"></ion-icon> Data Hewan</a>
+                <a href="medical-records.html" class="menu-item"><ion-icon name="medkit-outline"></ion-icon> Rekam
+                    Medis</a>
+                <a href="media.html" class="menu-item"><ion-icon name="images-outline"></ion-icon> Galeri Media</a>
+                <a href="api-keys.html" class="menu-item" id="apiKeyMenu"><ion-icon name="key-outline"></ion-icon> API
+                    Keys</a>
+                <div id="adminMenu"
+                    style="display:none; margin-top:1rem; border-top:1px solid #e2e8f0; padding-top:1rem;">
+                    <div class="menu-label"
+                        style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                        Admin</div>
+                    <a href="users.html" class="menu-item active"><ion-icon name="people-outline"></ion-icon> User
+                        Management</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="userInitial">U</div>
+                    <div class="user-info">
+                        <div id="userName">User</div>
+                        <span id="userRole">Role</span>
+                    </div>
+                    <button onclick="logout()" class="btn-link" style="margin-left:auto; color:#ef4444;" title="Logout">
+                        <ion-icon name="log-out-outline" style="font-size:1.5rem;"></ion-icon>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h2 class="page-title">Manajemen User</h2>
+                    <p style="color:var(--text-muted);">Kelola pengguna aplikasi dan hak akses (Admin Only).</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <ion-icon name="person-add-outline"></ion-icon> Tambah User
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-title"><span>Daftar Pengguna</span></div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nama</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTable">
+                        <!-- Data -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ADD USER MODAL -->
+            <div id="addModal" class="card" style="display:none; border:2px solid var(--primary); margin-top:1rem;">
+                <div class="card-title"><span>Tambah User Baru</span></div>
+                <div class="grid-cols-4" style="grid-template-columns: 1fr 1fr;">
+                    <div>
+                        <label>Nama</label>
+                        <input type="text" id="addName">
+                    </div>
+                    <div>
+                        <label>Email</label>
+                        <input type="email" id="addEmail">
+                    </div>
+                    <div>
+                        <label>Password</label>
+                        <input type="password" id="addPassword">
+                    </div>
+                    <div>
+                        <label>Role</label>
+                        <select id="addRole">
+                            <option value="user" selected>User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:1rem;">
+                    <button class="btn btn-primary" onclick="saveUser()">Simpan</button>
+                    <button class="btn btn-outline" onclick="closeAddModal()">Batal</button>
+                </div>
+            </div>
+
+            <!-- EDIT MODAL (Simple overlay or below table) -->
+            <div id="editModal" class="card" style="display:none; border:2px solid var(--primary);">
+                <div class="card-title"><span>Edit User</span></div>
+                <input type="hidden" id="editId">
+                <div class="grid-cols-4" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div>
+                        <label>Nama</label>
+                        <input type="text" id="editName">
+                    </div>
+                    <div>
+                        <label>Email</label>
+                        <input type="email" id="editEmail">
+                    </div>
+                    <div>
+                        <label>Role</label>
+                        <select id="editRole">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-primary" onclick="saveEdit()">Simpan Perubahan</button>
+                    <button class="btn btn-outline" onclick="closeModal()">Batal</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const API = "http://localhost:3000/api";
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (!token || !user) {
+            window.location.href = "login.html";
+        }
+
+        // Admin Check
+        if (user.role !== 'admin') {
+            alert("Akses ditolak. Halaman ini hanya untuk admin.");
+            window.location.href = "dashboard.html";
+        }
+
+        // Hide API Key menu for admin (since this page is admin-only)
+        document.getElementById("apiKeyMenu").style.display = "none";
+
+        // Update Profile Info
+        if (user) {
+            document.getElementById("userName").innerText = user.name.split(" ")[0];
+            document.getElementById("userRole").innerText = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+            document.getElementById("userInitial").innerText = user.name.charAt(0).toUpperCase();
+        }
+
+        function closeModal() {
+            document.getElementById("editModal").style.display = "none";
+        }
+
+        function closeAddModal() {
+            document.getElementById("addModal").style.display = "none";
+        }
+
+        function openAddModal() {
+            document.getElementById("addModal").style.display = "block";
+            document.getElementById("editModal").style.display = "none";
+        }
+
+        async function saveUser() {
+            const name = document.getElementById("addName").value;
+            const email = document.getElementById("addEmail").value;
+            const password = document.getElementById("addPassword").value;
+            const role = document.getElementById("addRole").value;
+
+            if (!name || !email || !password) return alert("Semua field harus diisi");
+
+            try {
+                const res = await fetch(`${API}/users`, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.message);
+
+                alert("User berhasil dibuat");
+                closeAddModal();
+                loadUsers();
+                // Clear form
+                document.getElementById("addName").value = "";
+                document.getElementById("addEmail").value = "";
+                document.getElementById("addPassword").value = "";
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function saveEdit() {
+            const id = document.getElementById("editId").value;
+            const name = document.getElementById("editName").value;
+            const email = document.getElementById("editEmail").value;
+            const role = document.getElementById("editRole").value;
+
+            const res = await fetch(`${API}/users/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Authorization": "Bearer " + token,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ name, email, role })
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                alert(result.message || "Gagal update user");
+                return;
+            }
+
+            closeModal();
+            loadUsers();
+        }
+
+        function openEdit(id, name, email, role) {
+            document.getElementById("editModal").style.display = "block";
+            document.getElementById("addModal").style.display = "none";
+            document.getElementById("editId").value = id;
+            document.getElementById("editName").value = name;
+            document.getElementById("editEmail").value = email;
+            document.getElementById("editRole").value = role;
+        }
+
+        async function deleteUser(id) {
+            if (!confirm("Yakin hapus user ini?")) return;
+            try {
+                const res = await fetch(`${API}/users/${id}`, {
+                    method: "DELETE",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (res.ok) loadUsers();
+                else alert("Gagal hapus");
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadUsers() {
+            try {
+                const res = await fetch(`${API}/users`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const users = await res.json();
+                const tbody = document.getElementById("userTable");
+                tbody.innerHTML = "";
+
+                if (Array.isArray(users)) {
+                    users.forEach(u => {
+                        tbody.innerHTML += `
+                        <tr>
+                            <td>${u.id}</td>
+                            <td>${u.name}</td>
+                            <td>${u.email}</td>
+                            <td>${u.email}</td>
+                            <td><span class="badge">${u.role}</span></td>
+                            <td>
+                            <td>
+                                <button class="btn btn-outline" style="padding:4px 8px;" onclick="openEdit(${u.id}, '${u.name}', '${u.email}', '${u.role}')"><ion-icon name="create-outline"></ion-icon></button>
+                                <button class="btn btn-outline" style="color:var(--danger); border-color:var(--danger); padding:4px 8px;" onclick="deleteUser(${u.id})"><ion-icon name="trash-outline"></ion-icon></button>
+                            </td>
+                        </tr>
+                        `;
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        /* ================= LOGOUT ================= */
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+
+        loadUsers();
+    </script>
+
+</body>
+
+</html>

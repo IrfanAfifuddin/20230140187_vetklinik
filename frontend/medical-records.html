@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Rekam Medis | Klinik Hewan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <ion-icon name="paw"></ion-icon> VetKlinik
+                </div>
+            </div>
+            <nav class="sidebar-menu">
+                <div class="menu-label"
+                    style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                    Menu</div>
+                <a href="dashboard.html" class="menu-item"><ion-icon name="grid-outline"></ion-icon> Dashboard</a>
+                <a href="animals.html" class="menu-item"><ion-icon name="list-outline"></ion-icon> Data Hewan</a>
+                <a href="medical-records.html" class="menu-item active"><ion-icon name="medkit-outline"></ion-icon>
+                    Rekam Medis</a>
+                <a href="media.html" class="menu-item"><ion-icon name="images-outline"></ion-icon> Galeri Media</a>
+                <a href="api-keys.html" class="menu-item" id="apiKeyMenu"><ion-icon name="key-outline"></ion-icon> API
+                    Keys</a>
+                <div id="adminMenu"
+                    style="display:none; margin-top:1rem; border-top:1px solid #e2e8f0; padding-top:1rem;">
+                    <div class="menu-label"
+                        style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                        Admin</div>
+                    <a href="users.html" class="menu-item"><ion-icon name="people-outline"></ion-icon> User
+                        Management</a>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="userInitial">U</div>
+                    <div class="user-info">
+                        <div id="userName">User</div>
+                        <span id="userRole">Role</span>
+                    </div>
+                    <button onclick="logout()" class="btn-link" style="margin-left:auto; color:#ef4444;" title="Logout">
+                        <ion-icon name="log-out-outline" style="font-size:1.5rem;"></ion-icon>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h2 class="page-title">Rekam Medis</h2>
+                    <p style="color:var(--text-muted);">Riwayat pemeriksaan dan kesehatan hewan.</p>
+                </div>
+            </div>
+
+            <div class="card api-key-card" id="apiKeyCard">
+                <div class="card-title">
+                    <span><ion-icon name="key"></ion-icon> Autentikasi Data</span>
+                </div>
+                <p style="margin-bottom:1rem;">Masukkan API Key Anda untuk memuat data rekam medis.</p>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="inputApiKey" placeholder="Tempel API Key Anda di sini..." style="margin:0;">
+                    <button class="btn btn-primary" style="background:#fff; color:var(--primary);"
+                        onclick="saveKeyAndLoad()">Load Data</button>
+                </div>
+            </div>
+
+            <div class="card" id="selectCard" style="display:none;">
+                <div class="card-title"><span>Pilih Hewan</span></div>
+                <div style="display:flex; gap:10px;">
+                    <select id="animalSelect" style="margin:0; flex:1;"></select>
+                    <!-- Admin Only Add Record Trigger could go here or inside data card -->
+                </div>
+            </div>
+
+            <!-- FORM TAMBAH (Admin only usually, or user if allowed?) Existing logic seems to imply admin adds records -->
+            <div class="card" id="formCard" style="display:none; border-left:4px solid var(--primary);">
+                <div class="card-title"><span>Tambah Pemeriksaan Baru</span></div>
+                <div class="grid-cols-4" style="grid-template-columns: 1fr 1fr;">
+                    <div>
+                        <label>Tanggal Kunjungan</label>
+                        <input type="date" id="visit_date">
+                    </div>
+                    <div>
+                        <label>Dokter Hewan</label>
+                        <input type="text" id="vet_name" placeholder="Dr. ...">
+                    </div>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label>Diagnosis</label>
+                    <input type="text" id="diagnosis" placeholder="Hasil pemeriksaan...">
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label>Treatment / Obat</label>
+                    <textarea id="treatment" rows="2" placeholder="Tindakan yang diberikan..."></textarea>
+                </div>
+                <div style="margin-bottom:1rem;">
+                    <label>Catatan Tambahan</label>
+                    <textarea id="notes" rows="2" placeholder="Opsional..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="addRecord()">Simpan Rekam Medis</button>
+            </div>
+
+            <div class="card" id="dataCard" style="display:none;">
+                <div class="card-title"><span>Riwayat Kesehatan</span></div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Diagnosis</th>
+                            <th>Treatment</th>
+                            <th>Dokter</th>
+                            <th>Catatan</th>
+                            <th class="admin-col" style="display:none;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordTable">
+                        <!-- Data loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Edit Record Modal -->
+            <div id="editRecordModal" class="modal"
+                style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+                <div class="modal-content"
+                    style="background:white; width:400px; margin:100px auto; padding:20px; border-radius:8px;">
+                    <h3>Edit Rekam Medis</h3>
+                    <input type="hidden" id="editRecordId">
+                    <div style="margin-bottom:1rem;">
+                        <label>Diagnosis</label>
+                        <input type="text" id="editDiagnosis" class="form-control" style="width:100%;">
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label>Treatment</label>
+                        <textarea id="editTreatment" class="form-control" style="width:100%;" rows="2"></textarea>
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label>Dokter/Vet</label>
+                        <input type="text" id="editVetName" class="form-control" style="width:100%;">
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label>Catatan</label>
+                        <textarea id="editNotes" class="form-control" style="width:100%;" rows="2"></textarea>
+                    </div>
+                    <div style="text-align:right;">
+                        <button class="btn btn-outline" onclick="closeEditRecordModal()">Batal</button>
+                        <button class="btn btn-primary" onclick="updateRecord()">Simpan</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const API = "http://localhost:3000/api";
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user"));
+        let apiKey = localStorage.getItem("apiKey");
+
+        if (!token || !user) window.location.href = "login.html";
+
+        // Sidebar & User Setup
+        document.getElementById("userName").innerText = user.name.split(" ")[0];
+        document.getElementById("userRole").innerText = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        document.getElementById("userInitial").innerText = user.name.charAt(0).toUpperCase();
+        if (user.role === 'admin') {
+            document.getElementById("adminMenu").style.display = "block";
+            document.getElementById("apiKeyMenu").style.display = "none";
+        }
+
+        // UI Logic
+        const selectCard = document.getElementById("selectCard");
+        const dataCard = document.getElementById("dataCard");
+        const formCard = document.getElementById("formCard");
+        const apiKeyCard = document.getElementById("apiKeyCard");
+        const inputApiKey = document.getElementById("inputApiKey");
+
+        if (user.role === 'admin') {
+            apiKeyCard.style.display = "none";
+            selectCard.style.display = "block"; // Show dropdown logic
+            formCard.style.display = "block";   // Show add form
+            dataCard.style.display = "block";   // Show table
+            loadAnimals(); // Immediate load
+        } else {
+            if (apiKey) {
+                inputApiKey.value = apiKey;
+                // auto-load optional
+            }
+        }
+
+        async function saveKeyAndLoad() {
+            const key = document.getElementById("inputApiKey").value.trim();
+            if (!key && user.role !== 'admin') return alert("API Key diperlukan");
+            if (user.role !== 'admin') {
+                apiKey = key;
+                localStorage.setItem("apiKey", key);
+            }
+            await loadAnimals();
+        }
+
+        function getHeaders() {
+            const h = { "Content-Type": "application/json" };
+            if (token) h["Authorization"] = `Bearer ${token}`;
+            if (apiKey) h["x-api-key"] = apiKey;
+            return h;
+        }
+
+        /* LOAD ANIMALS TO DROPDOWN */
+        async function loadAnimals() {
+            if (user.role !== 'admin') {
+                // Hide functional cards until loaded
+                selectCard.style.display = "none";
+                dataCard.style.display = "none";
+            }
+
+            try {
+                const res = await fetch(`${API}/animals`, { headers: getHeaders() });
+                if (!res.ok) throw new Error("Gagal");
+                const animals = await res.json();
+
+                const select = document.getElementById("animalSelect");
+                select.innerHTML = "";
+
+                if (Array.isArray(animals)) {
+                    // Success Loading
+                    if (user.role !== 'admin') {
+                        selectCard.style.display = "block";
+                        dataCard.style.display = "block"; // Only show, content depends on selection
+                    }
+
+                    if (animals.length === 0) {
+                        select.innerHTML = "<option>Tidak ada data hewan</option>";
+                        return;
+                    }
+
+                    animals.forEach(a => {
+                        const opt = document.createElement("option");
+                        opt.value = a.id;
+                        const ownerInfo = a.User ? ` - Owner: ${a.User.name}` : '';
+                        opt.innerText = `${a.name} (${a.species})${ownerInfo}`;
+                        select.appendChild(opt);
+                    });
+
+                    // Load records for first animal
+                    loadRecords(animals[0].id);
+                }
+
+            } catch (e) {
+                console.error(e);
+                if (user.role !== 'admin') alert("Gagal memuat data hewan periksa API Key");
+            }
+        }
+
+        async function loadRecords(animalId) {
+            if (!animalId) return;
+            try {
+                const res = await fetch(`${API}/medical-records/${animalId}`, { headers: getHeaders() });
+                const records = await res.json();
+                const table = document.getElementById("recordTable");
+                table.innerHTML = "";
+
+                if (Array.isArray(records)) {
+                    if (records.length === 0) {
+                        table.innerHTML = "<tr><td colspan='5' class='text-center'>Belum ada rekam medis.</td></tr>";
+                        return;
+                    }
+
+                    // Show Aksi Header if Admin
+                    if (user.role === 'admin') {
+                        document.querySelectorAll('.admin-col').forEach(el => el.style.display = '');
+                    }
+
+                    records.forEach(r => {
+                        let actionButtons = '';
+                        if (user.role === 'admin') {
+                            actionButtons = `
+                                <td>
+                                    <button onclick="openEditRecordModal(${r.id}, '${r.diagnosis}', '${r.treatment}', '${r.vet_name}', '${r.notes || ''}')" style="color:blue; border:none; background:none; cursor:pointer;"><ion-icon name="create-outline"></ion-icon></button>
+                                    <button onclick="deleteRecord(${r.id})" style="color:red; border:none; background:none; cursor:pointer;"><ion-icon name="trash-outline"></ion-icon></button>
+                                </td>
+                            `;
+                        }
+
+                        table.innerHTML += `
+                    <tr>
+                        <td>${new Date(r.visit_date).toLocaleDateString()}</td>
+                        <td style="font-weight:600;">${r.diagnosis}</td>
+                        <td>${r.treatment}</td>
+                        <td><span class="badge" style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-size:0.75rem;">${r.vet_name}</span></td>
+                        <td style="color:var(--text-muted); font-size:0.85rem;">${r.notes || "-"}</td>
+                        ${actionButtons}
+                    </tr>`;
+                    });
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        /* EDIT & DELETE Logic */
+        function openEditRecordModal(id, diag, treat, vet, notes) {
+            document.getElementById("editRecordId").value = id;
+            document.getElementById("editDiagnosis").value = diag;
+            document.getElementById("editTreatment").value = treat;
+            document.getElementById("editVetName").value = vet;
+            document.getElementById("editNotes").value = notes;
+            document.getElementById("editRecordModal").style.display = "block";
+        }
+
+        function closeEditRecordModal() {
+            document.getElementById("editRecordModal").style.display = "none";
+        }
+
+        async function updateRecord() {
+            const id = document.getElementById("editRecordId").value;
+            const diagnosis = document.getElementById("editDiagnosis").value;
+            const treatment = document.getElementById("editTreatment").value;
+            const vet_name = document.getElementById("editVetName").value;
+            const notes = document.getElementById("editNotes").value;
+
+            try {
+                const res = await fetch(`${API}/medical-records/${id}`, {
+                    method: "PUT", headers: getHeaders(),
+                    body: JSON.stringify({ diagnosis, treatment, vet_name, notes })
+                });
+                if (res.ok) {
+                    alert("Berhasil!");
+                    closeEditRecordModal();
+                    loadRecords(document.getElementById("animalSelect").value);
+                } else alert("Gagal update");
+            } catch (e) { alert("Error"); }
+        }
+
+        async function deleteRecord(id) {
+            if (!confirm("Hapus rekam medis ini?")) return;
+            try {
+                const res = await fetch(`${API}/medical-records/${id}`, {
+                    method: "DELETE", headers: getHeaders()
+                });
+                if (res.ok) {
+                    alert("Dihapus");
+                    loadRecords(document.getElementById("animalSelect").value);
+                } else alert("Gagal hapus");
+            } catch (e) { alert("Error"); }
+        }
+
+        async function addRecord() {
+            const animalId = document.getElementById("animalSelect").value;
+            if (!animalId) return alert("Pilih hewan dahulu");
+
+            const body = {
+                animal_id: animalId,
+                diagnosis: document.getElementById("diagnosis").value,
+                treatment: document.getElementById("treatment").value,
+                visit_date: document.getElementById("visit_date").value,
+                vet_name: document.getElementById("vet_name").value,
+                notes: document.getElementById("notes").value
+            };
+
+            try {
+                const res = await fetch(`${API}/medical-records`, {
+                    method: "POST", headers: getHeaders(), body: JSON.stringify(body)
+                });
+                if (!res.ok) {
+                    const r = await res.json();
+                    return alert(r.message || "Gagal");
+                }
+                alert("Rekam medis tersimpan");
+                document.getElementById("diagnosis").value = "";
+                document.getElementById("treatment").value = "";
+                document.getElementById("notes").value = "";
+                loadRecords(animalId);
+            } catch (e) { alert("Error"); }
+        }
+
+        document.getElementById("animalSelect").addEventListener("change", (e) => {
+            loadRecords(e.target.value);
+        });
+
+        function logout() { localStorage.clear(); window.location.href = "login.html"; }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard | Klinik Hewan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+
+    <div class="layout-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <ion-icon name="paw"></ion-icon> VetKlinik
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <div class="menu-label"
+                    style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                    Menu</div>
+
+                <a href="dashboard.html" class="menu-item active">
+                    <ion-icon name="grid-outline"></ion-icon> Dashboard
+                </a>
+                <a href="animals.html" class="menu-item">
+                    <ion-icon name="list-outline"></ion-icon> Data Hewan
+                </a>
+                <a href="medical-records.html" class="menu-item">
+                    <ion-icon name="medkit-outline"></ion-icon> Rekam Medis
+                </a>
+                <a href="media.html" class="menu-item">
+                    <ion-icon name="images-outline"></ion-icon> Galeri Media
+                </a>
+                <a href="api-keys.html" class="menu-item" id="apiKeyMenu">
+                    <ion-icon name="key-outline"></ion-icon> API Keys
+                </a>
+
+                <div id="adminMenu"
+                    style="display:none; margin-top:1rem; border-top:1px solid #e2e8f0; padding-top:1rem;">
+                    <div class="menu-label"
+                        style="font-size:0.75rem; color:#94a3b8; padding:0 1rem; margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">
+                        Admin</div>
+                    <a href="users.html" class="menu-item">
+                        <ion-icon name="people-outline"></ion-icon> User Management
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="userInitial">U</div>
+                    <div class="user-info">
+                        <div id="userName">User</div>
+                        <span id="userRole">Role</span>
+                    </div>
+                    <button onclick="logout()" class="btn-link" style="margin-left:auto; color:#ef4444;" title="Logout">
+                        <ion-icon name="log-out-outline" style="font-size:1.5rem;"></ion-icon>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h2 class="page-title">Dashboard Overview</h2>
+                    <p style="color:var(--text-muted);">Selamat datang kembali di panel kontrol sistem.</p>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid-cols-4">
+                <div class="card">
+                    <div class="card-title">
+                        <span>Total Hewan</span>
+                        <ion-icon name="paw" style="color:var(--primary); font-size:1.5rem;"></ion-icon>
+                    </div>
+                    <div class="stat-value" id="totalAnimals">0</div>
+                    <div class="stat-label">Terdaftar di sistem</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>Rekam Medis</span>
+                        <ion-icon name="fitness" style="color:#10b981; font-size:1.5rem;"></ion-icon>
+                    </div>
+                    <div class="stat-value" id="totalRecords">0</div>
+                    <div class="stat-label">Total kunjungan</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span>File Media</span>
+                        <ion-icon name="image" style="color:#3b82f6; font-size:1.5rem;"></ion-icon>
+                    </div>
+                    <div class="stat-value" id="totalMedia">0</div>
+                    <div class="stat-label">Dokumen & Foto</div>
+                </div>
+
+                <div class="card" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color:white;">
+                    <div class="card-title">
+                        <span style="color:white;">Status API</span>
+                        <ion-icon name="server" style="color:#22d3ee; font-size:1.5rem;"></ion-icon>
+                    </div>
+                    <div class="stat-value" style="color:white;">Online</div>
+                    <div class="stat-label" style="color:#94a3b8;">Sistem berjalan normal</div>
+                </div>
+            </div>
+
+            <!-- Quick Access / Recent Activity (Optional placeholder) -->
+            <div class="card"
+                style="margin-top:1.5rem; min-height:200px; display:flex; align-items:center; justify-content:center; flex-direction:column; border-style:dashed; border-color:#cbd5e1;">
+                <ion-icon name="rocket-outline" style="font-size:3rem; color:#cbd5e1; margin-bottom:1rem;"></ion-icon>
+                <h3 style="color:#94a3b8; font-weight:500;">Pilih menu di samping untuk mulai mengelola data.</h3>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const API = "http://localhost:3000/api";
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (!token || !user) window.location.href = "login.html";
+
+        // Setup Sidebar based on User
+        document.getElementById("userName").innerText = user.name.split(" ")[0]; // First name only
+        document.getElementById("userRole").innerText = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        document.getElementById("userInitial").innerText = user.name.charAt(0).toUpperCase();
+
+        if (user.role === 'admin') {
+            document.getElementById("adminMenu").style.display = "block";
+            document.getElementById("apiKeyMenu").style.display = "none";
+        }
+
+        // Load Stats (Auto-load via JWT, no API Key needed for dashboard)
+        async function loadStats() {
+            try {
+                const headers = { "Authorization": `Bearer ${token}` };
+                const res = await fetch(`${API}/dashboard/stats`, { headers });
+
+                if (!res.ok) throw new Error("Failed");
+
+                const stats = await res.json();
+
+                // Animasi Angka (Simple)
+                document.getElementById("totalAnimals").innerText = stats.totalAnimals;
+                document.getElementById("totalRecords").innerText = stats.totalRecords;
+                document.getElementById("totalMedia").innerText = stats.totalMedia;
+
+            } catch (e) {
+                console.error("Stats error", e);
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+
+        loadStats();
+    </script>
+
+</body>
+
+</html>
